@@ -1,4 +1,4 @@
-<html lang="pt-br" style="--primary-color: #0f172a; --accent-color: #2563eb;">
+<html lang="pt-br" style="--primary-color: #0f172a; --accent-color: #2563eb; --base-font-size: 14px; --paper-padding-top: 10mm; --line-height: 1.5;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,15 +17,23 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
-        /* --- CONFIGURAÇÕES GERAIS (Mantidas do CV) --- */
+        /* --- CONFIGURAÇÕES GERAIS --- */
         :root {
+            /* Cores */
             --primary-color: #0f172a;
             --secondary-color: #334155;
             --accent-color: #2563eb;
             --text-color: #333333;
+            --ai-color: #8b5cf6;
+            
+            /* Dimensões Fixas */
             --paper-width: 210mm;
             --paper-height: 297mm;
-            --ai-color: #8b5cf6;
+
+            /* Variáveis Dinâmicas (Controladas pelo Dock) */
+            --base-font-size: 14px;      /* Tamanho da fonte do corpo */
+            --paper-padding-top: 10mm;   /* Margem superior do papel */
+            --line-height: 1.5;          /* Espaçamento entre linhas */
         }
 
         body {
@@ -37,7 +45,7 @@
             min-height: 100vh;
             margin: 0;
             padding-top: 20px;
-            padding-bottom: 240px; 
+            padding-bottom: 280px; /* Aumentado para caber o dock maior */
         }
 
         /* --- FOLHA A4 PIXEL PERFECT --- */
@@ -47,8 +55,8 @@
             background: white;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             position: relative;
-            /* Margens maiores para carta (padrão documento oficial) */
-            padding: 15mm 20mm; 
+            /* Padding dinâmico */
+            padding: var(--paper-padding-top) 20mm 15mm 20mm; 
             box-sizing: border-box;
             overflow: hidden; 
             -webkit-font-smoothing: antialiased;
@@ -70,6 +78,9 @@
             position: absolute; top: 296mm; left: 0; width: 100%; height: 1px;
             border-top: 2px dashed #ef4444; opacity: 0.3; pointer-events: none; z-index: 50;
         }
+        #page-break-guide::after {
+            content: "FIM DA PÁGINA"; position: absolute; right: 10px; top: -15px; color: #ef4444; font-size: 9px;
+        }
 
         /* Marca d'água */
         #watermark-layer {
@@ -85,42 +96,46 @@
         .editable:hover { background-color: rgba(37, 99, 235, 0.05); border-radius: 4px; }
         .editable:focus { background-color: white; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
 
+        /* Cabeçalho Responsivo ao Zoom */
+        #header-name { font-size: 2.2rem; } /* Nome ligeiramente menor que CV para caber mais */
+        
         .letter-date {
-            font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; text-align: right; font-weight: 500;
+            font-size: var(--base-font-size); 
+            color: #64748b; margin-bottom: 1.5rem; text-align: right; font-weight: 500;
         }
 
         .recipient-block {
-            margin-bottom: 2.5rem;
-            font-size: 0.95rem;
+            margin-bottom: 2rem;
+            font-size: var(--base-font-size);
             color: #334155;
-            line-height: 1.6;
+            line-height: var(--line-height);
             border-left: 3px solid var(--accent-color);
             padding-left: 12px;
         }
 
         .letter-body {
-            font-size: 1rem;
+            font-size: var(--base-font-size);
             color: #334155;
-            line-height: 1.8; /* Leitura confortável */
+            line-height: var(--line-height);
             text-align: justify;
         }
 
         .letter-paragraph {
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem; /* Espaço entre parágrafos fixo, mas afetado pelo line-height */
         }
 
         .signature-block {
-            margin-top: 3rem;
-            font-size: 1rem;
+            margin-top: 2rem;
+            font-size: var(--base-font-size);
             color: var(--primary-color);
         }
 
         .tutorial-text { color: #94a3b8; font-style: italic; }
 
-        /* --- COMPONENTES VISUAIS (Header igual ao CV) --- */
+        /* --- COMPONENTES VISUAIS --- */
         /* Foto */
         .photo-container {
-            width: 100px; height: 100px; border-radius: 50%;
+            width: 90px; height: 90px; border-radius: 50%; /* Reduzido levemente */
             border: 3px solid var(--primary-color); overflow: hidden;
             position: relative; cursor: pointer; background-color: #f1f5f9;
         }
@@ -134,39 +149,37 @@
 
         /* QR Code */
         .qr-container {
-            width: 70px; height: 70px; border: 1px dashed #cbd5e1;
+            width: 60px; height: 60px; border: 1px dashed #cbd5e1;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; position: relative;
         }
         .qr-container:hover { border-color: var(--accent-color); }
 
-        /* --- DOCK DE CONTROLE (Mantido) --- */
+        /* --- DOCK DE CONTROLE --- */
         #control-dock {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; padding: 12px 15px; border-top: 1px solid #e2e8f0;
+            background: white; padding: 10px 15px; border-top: 1px solid #e2e8f0;
             box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 1000;
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 8px;
         }
-        .dock-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
-        .dock-label { font-size: 0.7rem; text-transform: uppercase; font-weight: bold; color: #64748b; display: block; }
+        .dock-row { display: flex; align-items: center; gap: 15px; justify-content: space-between; flex-wrap: wrap; }
+        .dock-group { display: flex; align-items: center; gap: 8px; }
+        .dock-label { font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: #64748b; white-space: nowrap; }
+        
+        /* Controles Deslizantes (Range Sliders) */
+        .range-control { display: flex; align-items: center; gap: 5px; }
+        .range-input { width: 80px; height: 4px; accent-color: var(--primary-color); cursor: pointer; }
         
         /* Scroll de Cores */
-        .color-scroll-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; max-width: 100%; scrollbar-width: thin; }
-        .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); flex-shrink: 0; position: relative; }
+        .color-scroll-container { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; max-width: 250px; scrollbar-width: thin; }
+        .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2); flex-shrink: 0; position: relative; }
         .color-dot-dual { background: linear-gradient(135deg, var(--c-prim) 50%, var(--c-sec) 50%); }
         .color-dot:hover { transform: scale(1.15); z-index: 10; }
         
-        /* Rotulos de grupos de cores */
-        .color-group-label {
-            font-size: 0.65rem; font-weight: 900; color: #94a3b8;
-            margin-right: 4px; writing-mode: vertical-lr; text-orientation: mixed;
-            transform: rotate(180deg); white-space: nowrap;
-        }
-
         .btn-action {
             background: var(--primary-color); color: white; border: none;
-            padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
-            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
+            padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.2s; white-space: nowrap;
         }
         .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
         .btn-action.secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
@@ -176,7 +189,7 @@
 
         /* --- PAINEL IA --- */
         #ai-panel {
-            position: fixed; bottom: 210px; left: 50%; transform: translateX(-50%);
+            position: fixed; bottom: 200px; left: 50%; transform: translateX(-50%);
             width: 95%; max-width: 600px; background: white; border-radius: 12px;
             box-shadow: 0 -5px 30px rgba(0,0,0,0.2); border: 1px solid #e2e8f0;
             padding: 15px; z-index: 1001; display: none; flex-direction: column; gap: 12px;
@@ -193,7 +206,7 @@
         @media print {
             body { background: white; padding: 0; display: block; }
             #control-dock, #ai-panel, #page-break-guide { display: none !important; }
-            #resume-paper { box-shadow: none; margin: 0; width: 100%; height: auto; padding: 15mm 20mm; }
+            #resume-paper { box-shadow: none; margin: 0; width: 100%; height: auto; padding: var(--paper-padding-top) 20mm 15mm 20mm; }
             .editable { border: none !important; }
         }
     </style>
@@ -202,10 +215,10 @@
 
     <div id="resume-paper">
         <div id="watermark-layer"></div>
-        <div id="page-break-guide" title="Limite A4"></div>
+        <div id="page-break-guide" title="O conteúdo abaixo será cortado"></div>
 
-        <!-- CABEÇALHO (Idêntico ao do Currículo) -->
-        <header class="flex flex-col md:flex-row items-center gap-6 mb-10 border-b-2 border-gray-100 pb-6">
+        <!-- CABEÇALHO -->
+        <header class="flex flex-col md:flex-row items-center gap-6 mb-6 border-b-2 border-gray-100 pb-4">
             
             <div id="photo-area" class="flex-shrink-0" style="display: none;">
                 <div class="photo-container" onclick="document.getElementById('upload-photo').click()">
@@ -217,7 +230,7 @@
 
             <div class="flex-grow text-center md:text-left w-full">
                 <div id="editable-name" class="editable text-3xl font-black text-[var(--primary-color)] uppercase tracking-tight mb-1" contenteditable="true">[SEU NOME COMPLETO]</div>
-                <div id="editable-role" class="editable text-lg font-semibold text-[var(--accent-color)] mb-3" contenteditable="true">[SEU CARGO OU OBJETIVO]</div>
+                <div id="editable-role" class="editable text-lg font-semibold text-[var(--accent-color)] mb-2" contenteditable="true">[SEU CARGO OU OBJETIVO]</div>
                 
                 <div id="editable-contact" class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
                     <span class="editable" contenteditable="true"><i class="fas fa-envelope text-[var(--accent-color)]"></i> seu.email@exemplo.com</span>
@@ -240,8 +253,8 @@
 
             <div id="recipient-block" class="recipient-block">
                 <p class="font-bold text-[var(--primary-color)] editable" contenteditable="true">À equipe de Recrutamento da [Nome da Empresa]</p>
-                <p class="editable text-sm text-gray-500" contenteditable="true">A/C: [Nome do Gestor ou "Gerente de Contratação"]</p>
-                <p class="editable text-sm text-gray-500 mt-1" contenteditable="true">Ref: Candidatura para a vaga de [Nome da Vaga]</p>
+                <p class="editable text-gray-500" contenteditable="true">A/C: [Nome do Gestor ou "Gerente de Contratação"]</p>
+                <p class="editable text-gray-500 mt-1" contenteditable="true">Ref: Candidatura para a vaga de [Nome da Vaga]</p>
             </div>
 
             <div class="letter-body">
@@ -306,41 +319,52 @@
 
     <!-- DOCK DE CONTROLE -->
     <div id="control-dock">
+        <!-- Linha 1: Controles de Layout (NOVO) -->
+        <div class="dock-row" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+            <div class="dock-group">
+                <span class="dock-label"><i class="fas fa-arrows-alt-v"></i> Posição Topo</span>
+                <input type="range" class="range-input" min="5" max="30" value="10" oninput="updateLayout('--paper-padding-top', this.value, 'mm')" title="Ajustar margem superior">
+            </div>
+            <div class="dock-group">
+                <span class="dock-label"><i class="fas fa-text-height"></i> Fonte</span>
+                <input type="range" class="range-input" min="10" max="18" value="14" oninput="updateLayout('--base-font-size', this.value, 'px')" title="Ajustar tamanho da fonte">
+            </div>
+            <div class="dock-group">
+                <span class="dock-label"><i class="fas fa-align-justify"></i> Espaçamento</span>
+                <input type="range" class="range-input" min="1.0" max="2.0" step="0.1" value="1.5" oninput="updateLayout('--line-height', this.value)" title="Ajustar espaçamento entre linhas">
+            </div>
+        </div>
+
+        <!-- Linha 2: Cores e Backup -->
         <div class="dock-row">
             <div class="flex items-center gap-2" style="flex: 1; min-width: 0;">
-                <span class="dock-label">ESTILOS PROFISSIONAIS:</span>
+                <span class="dock-label">ESTILO:</span>
                 <div class="color-scroll-container">
                     <div class="flex items-center gap-2">
-                        <!-- COPIADO DO CURRÍCULO PARA SINCRONIA TOTAL -->
-                        <!-- BANCOS & FINANÇAS -->
-                        <div class="color-group-label" style="color: #EB0029;">BANCOS</div>
+                        <!-- BANCOS -->
                         <div class="color-dot color-dot-dual" style="--c-prim: #EB0029; --c-sec: #cccccc;" onclick="setTheme('#EB0029', '#2d2d2d')" title="Vermelho Santander"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #F39200; --c-sec: #005A9C;" onclick="setTheme('#005A9C', '#F39200')" title="Laranja Itaú"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #cc0000; --c-sec: #e6e6e6;" onclick="setTheme('#cc0000', '#666666')" title="Bradesco"></div>
-                        <div class="color-dot color-dot-dual" style="--c-prim: #6a1b9a; --c-sec: #8e24aa;" onclick="setTheme('#4a148c', '#ab47bc')" title="Nubank/Tech"></div>
-
-                        <div class="color-group-label" style="color: #004B8D;">INDÚSTRIA</div>
+                        <!-- INDÚSTRIA -->
                         <div class="color-dot color-dot-dual" style="--c-prim: #e67e22; --c-sec: #003366;" onclick="setTheme('#003366', '#e67e22')" title="Braskem"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #007680; --c-sec: #D99800;" onclick="setTheme('#007680', '#D99800')" title="Vale"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #004B8D; --c-sec: #808080;" onclick="setTheme('#004B8D', '#546E7A')" title="Gerdau"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #003B26; --c-sec: #009640;" onclick="setTheme('#003B26', '#009640')" title="Verde Bracell"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #008542; --c-sec: #FFC72C;" onclick="setTheme('#008542', '#FFC72C')" title="Petrobras"></div>
-
-                        <div class="color-group-label" style="color: #000000;">BÁSICO</div>
-                        <div class="color-dot color-dot-dual" style="--c-prim: #000000; --c-sec: #2563eb;" onclick="setTheme('#000000', '#2563eb')" title="Preto/Azul"></div>
+                        <!-- BÁSICO -->
+                        <div class="color-dot color-dot-dual" style="--c-prim: #0f172a; --c-sec: #2563eb;" onclick="setTheme('#0f172a', '#2563eb')" title="Padrão Azul"></div>
                         <div class="color-dot color-dot-dual" style="--c-prim: #000000; --c-sec: #10b981;" onclick="setTheme('#000000', '#10b981')" title="Preto/Verde"></div>
-                        <div class="color-dot color-dot-dual" style="--c-prim: #374151; --c-sec: #3b82f6;" onclick="setTheme('#374151', '#3b82f6')" title="Cinza/Azul"></div>
-                        <div class="color-dot color-dot-dual" style="--c-prim: #1e3a8a; --c-sec: #fbbf24;" onclick="setTheme('#1e3a8a', '#fbbf24')" title="Royal/Gold"></div>
                     </div>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <button class="btn-action secondary btn-sm" onclick="exportData()" title="Salvar Backup"><i class="fas fa-download"></i> JSON</button>
-                <button class="btn-action secondary btn-sm" onclick="document.getElementById('import-json').click()" title="Restaurar (Aceita JSON do CV)"><i class="fas fa-upload"></i> Restaurar</button>
+                <button class="btn-action secondary btn-sm" onclick="document.getElementById('import-json').click()" title="Restaurar"><i class="fas fa-upload"></i> Restaurar</button>
                 <input type="file" id="import-json" class="hidden" accept=".json" onchange="importData(this)">
             </div>
         </div>
 
+        <!-- Linha 3: Ações Finais -->
         <div class="dock-row">
             <div class="flex items-center gap-2">
                 <button class="btn-action ai" onclick="toggleAI()"><i class="fas fa-robot"></i> IA</button>
@@ -361,12 +385,16 @@
             const dateEl = document.getElementById('editable-date');
             const now = new Date();
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            // Apenas define se for o padrão, para não sobrescrever edições
             if(dateEl.innerText.includes('2026') || dateEl.innerText === "") {
                 dateEl.innerText = now.toLocaleDateString('pt-BR', options);
             }
             setupAutoSave();
         });
+
+        // --- CONTROLE DE LAYOUT (NOVO) ---
+        function updateLayout(variable, value, unit='') {
+            document.documentElement.style.setProperty(variable, value + unit);
+        }
 
         // --- AUTO-SAVE ---
         function setupAutoSave() {
@@ -379,8 +407,7 @@
                     el.addEventListener('input', () => localStorage.setItem('autosave_letter_' + id, el.innerHTML));
                 }
             });
-            
-            // Tenta recuperar chave da API do currículo se não existir na carta
+            // Tenta recuperar chave da API do currículo
             if(!localStorage.getItem('gemini_api_key_letter') && localStorage.getItem('gemini_api_key_resume')) {
                 localStorage.setItem('gemini_api_key_letter', localStorage.getItem('gemini_api_key_resume'));
             }
@@ -456,10 +483,12 @@
         }
         function copyAIResult() { navigator.clipboard.writeText(document.getElementById('ai-output').innerText); alert('Texto copiado!'); }
 
-        // --- BACKUP JSON INTELIGENTE ---
+        // --- BACKUP JSON ATUALIZADO ---
         function exportData() {
+            // Pega os valores atuais dos controles deslizantes
+            const style = getComputedStyle(document.documentElement);
             const data = {
-                type: "cover_letter", // Identificador
+                type: "cover_letter", 
                 profile: {
                     name: document.getElementById('editable-name').innerText,
                     role: document.getElementById('editable-role').innerText,
@@ -478,8 +507,12 @@
                     qr: document.getElementById('qr-preview').src
                 },
                 theme: {
-                    primary: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
-                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
+                    primary: style.getPropertyValue('--primary-color').trim(),
+                    accent: style.getPropertyValue('--accent-color').trim(),
+                    // Salva configurações de layout
+                    fontSize: style.getPropertyValue('--base-font-size').trim(),
+                    paddingTop: style.getPropertyValue('--paper-padding-top').trim(),
+                    lineHeight: style.getPropertyValue('--line-height').trim()
                 }
             };
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
@@ -497,14 +530,12 @@
                     const data = JSON.parse(e.target.result);
                     let isResume = false;
 
-                    // Lógica para aceitar JSON do Currículo
                     if(data.type !== "cover_letter") {
                         if(confirm("Este arquivo parece ser um Currículo. Deseja importar os Dados Pessoais e Cores para a Carta?")) {
                             isResume = true;
                         } else { return; }
                     }
 
-                    // Importação Comum (CV ou Carta)
                     if(data.profile) {
                         document.getElementById('editable-name').innerText = data.profile.name;
                         document.getElementById('editable-role').innerText = data.profile.role;
@@ -513,13 +544,18 @@
                     if(data.images) {
                         if(data.images.photo && data.images.photo.startsWith('data:')) {
                             document.getElementById('img-preview').src = data.images.photo;
-                            document.getElementById('photo-area').style.display = 'block'; // Mostra se tiver foto
+                            document.getElementById('photo-area').style.display = 'block'; 
                         }
                         if(data.images.qr && data.images.qr.startsWith('data:')) document.getElementById('qr-preview').src = data.images.qr;
                     }
-                    if(data.theme) setTheme(data.theme.primary, data.theme.accent);
+                    if(data.theme) {
+                        setTheme(data.theme.primary, data.theme.accent);
+                        // Restaura layout se existir
+                        if(data.theme.fontSize) updateLayout('--base-font-size', parseFloat(data.theme.fontSize), 'px');
+                        if(data.theme.paddingTop) updateLayout('--paper-padding-top', parseFloat(data.theme.paddingTop), 'mm');
+                        if(data.theme.lineHeight) updateLayout('--line-height', data.theme.lineHeight);
+                    }
 
-                    // Importação Específica da Carta
                     if(!isResume && data.letterContent) {
                         document.getElementById('editable-date').innerText = data.letterContent.date || "";
                         document.getElementById('recipient-block').innerHTML = data.letterContent.recipientHTML || "";
@@ -541,19 +577,16 @@
             const paper = document.getElementById('resume-paper');
             const btn = event.target;
             const originalText = btn.innerHTML;
-            
             const guideEl = document.getElementById('page-break-guide');
             const photoEl = document.getElementById('photo-area');
             const qrEl = document.getElementById('qr-area');
             
-            // Oculta guias
             guideEl.style.display = 'none';
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
 
             const originalPhotoDisplay = photoEl.style.display;
             const originalQrDisplay = qrEl.style.display;
 
-            // Se for ATS (versão simples), esconde elementos visuais pesados
             if (!isComplete) { 
                 photoEl.style.display = 'none'; 
                 qrEl.style.display = 'none'; 
@@ -574,7 +607,6 @@
             } catch (error) {
                 console.error(error); alert('Erro ao gerar PDF.');
             } finally {
-                // Restaura estado
                 if (!isComplete) { 
                     photoEl.style.display = originalPhotoDisplay; 
                     qrEl.style.display = originalQrDisplay; 
