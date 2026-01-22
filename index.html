@@ -1,0 +1,597 @@
+<html lang="pt-br" style="--primary-color: #0f172a; --accent-color: #2563eb;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta de Apresentação Premium - Wellington Silva</title>
+
+    <!-- Fontes e Ícones -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&amp;family=Open+Sans:wght@400;600&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Bibliotecas de PDF e IA -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* --- CONFIGURAÇÕES GERAIS (Mantidas do CV) --- */
+        :root {
+            --primary-color: #0f172a;
+            --secondary-color: #334155;
+            --accent-color: #2563eb;
+            --text-color: #333333;
+            --paper-width: 210mm;
+            --paper-height: 297mm;
+            --ai-color: #8b5cf6;
+        }
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding-top: 20px;
+            padding-bottom: 240px; 
+        }
+
+        /* --- FOLHA A4 PIXEL PERFECT --- */
+        #resume-paper {
+            width: var(--paper-width);
+            min-height: var(--paper-height); 
+            background: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            position: relative;
+            /* Margens maiores para carta (padrão documento oficial) */
+            padding: 15mm 20mm; 
+            box-sizing: border-box;
+            overflow: hidden; 
+            -webkit-font-smoothing: antialiased;
+            color: var(--text-color);
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            #resume-paper {
+                width: 100%;
+                min-height: auto;
+                padding: 5mm;
+            }
+            body { padding-top: 0; background-color: white; }
+        }
+
+        /* Guia de Impressão */
+        #page-break-guide {
+            position: absolute; top: 296mm; left: 0; width: 100%; height: 1px;
+            border-top: 2px dashed #ef4444; opacity: 0.3; pointer-events: none; z-index: 50;
+        }
+
+        /* Marca d'água */
+        #watermark-layer {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-position: center; background-repeat: no-repeat;
+            background-size: 50%; opacity: 0.04; pointer-events: none; z-index: 0;
+        }
+
+        /* --- TIPOGRAFIA DA CARTA --- */
+        .editable {
+            outline: none; border: 1px dashed transparent; transition: all 0.2s; cursor: text;
+        }
+        .editable:hover { background-color: rgba(37, 99, 235, 0.05); border-radius: 4px; }
+        .editable:focus { background-color: white; box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2); }
+
+        .letter-date {
+            font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; text-align: right; font-weight: 500;
+        }
+
+        .recipient-block {
+            margin-bottom: 2.5rem;
+            font-size: 0.95rem;
+            color: #334155;
+            line-height: 1.6;
+            border-left: 3px solid var(--accent-color);
+            padding-left: 12px;
+        }
+
+        .letter-body {
+            font-size: 1rem;
+            color: #334155;
+            line-height: 1.8; /* Leitura confortável */
+            text-align: justify;
+        }
+
+        .letter-paragraph {
+            margin-bottom: 1.5rem;
+        }
+
+        .signature-block {
+            margin-top: 3rem;
+            font-size: 1rem;
+            color: var(--primary-color);
+        }
+
+        .tutorial-text { color: #94a3b8; font-style: italic; }
+
+        /* --- COMPONENTES VISUAIS (Header igual ao CV) --- */
+        /* Foto */
+        .photo-container {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid var(--primary-color); overflow: hidden;
+            position: relative; cursor: pointer; background-color: #f1f5f9;
+        }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.4);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.2s;
+        }
+        .photo-container:hover .photo-overlay { opacity: 1; }
+
+        /* QR Code */
+        .qr-container {
+            width: 70px; height: 70px; border: 1px dashed #cbd5e1;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative;
+        }
+        .qr-container:hover { border-color: var(--accent-color); }
+
+        /* --- DOCK DE CONTROLE (Mantido) --- */
+        #control-dock {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; padding: 12px 15px; border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 1000;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .dock-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+        .dock-label { font-size: 0.7rem; text-transform: uppercase; font-weight: bold; color: #64748b; display: block; }
+        
+        /* Scroll de Cores */
+        .color-scroll-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; max-width: 100%; scrollbar-width: thin; }
+        .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2); flex-shrink: 0; position: relative; }
+        .color-dot-dual { background: linear-gradient(135deg, var(--c-prim) 50%, var(--c-sec) 50%); }
+        .color-dot:hover { transform: scale(1.15); z-index: 10; }
+        
+        /* Rotulos de grupos de cores */
+        .color-group-label {
+            font-size: 0.65rem; font-weight: 900; color: #94a3b8;
+            margin-right: 4px; writing-mode: vertical-lr; text-orientation: mixed;
+            transform: rotate(180deg); white-space: nowrap;
+        }
+
+        .btn-action {
+            background: var(--primary-color); color: white; border: none;
+            padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;
+        }
+        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-action.secondary { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+        .btn-action.secondary:hover { background: #e2e8f0; }
+        .btn-action.accent { background: #dc2626; }
+        .btn-action.ai { background: linear-gradient(135deg, var(--ai-color), #4b7bec); border: 1px solid rgba(255,255,255,0.2); }
+
+        /* --- PAINEL IA --- */
+        #ai-panel {
+            position: fixed; bottom: 210px; left: 50%; transform: translateX(-50%);
+            width: 95%; max-width: 600px; background: white; border-radius: 12px;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); border: 1px solid #e2e8f0;
+            padding: 15px; z-index: 1001; display: none; flex-direction: column; gap: 12px;
+        }
+        #ai-panel.active { display: flex; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        
+        .ai-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .ai-title { font-weight: bold; color: var(--ai-color); font-size: 1rem; }
+        .ai-input-group { display: flex; gap: 10px; }
+        .ai-input { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .ai-result-area { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px dashed #cbd5e1; max-height: 180px; overflow-y: auto; font-size: 0.85rem; line-height: 1.5; color: #334155; }
+
+        @media print {
+            body { background: white; padding: 0; display: block; }
+            #control-dock, #ai-panel, #page-break-guide { display: none !important; }
+            #resume-paper { box-shadow: none; margin: 0; width: 100%; height: auto; padding: 15mm 20mm; }
+            .editable { border: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="resume-paper">
+        <div id="watermark-layer"></div>
+        <div id="page-break-guide" title="Limite A4"></div>
+
+        <!-- CABEÇALHO (Idêntico ao do Currículo) -->
+        <header class="flex flex-col md:flex-row items-center gap-6 mb-10 border-b-2 border-gray-100 pb-6">
+            
+            <div id="photo-area" class="flex-shrink-0" style="display: none;">
+                <div class="photo-container" onclick="document.getElementById('upload-photo').click()">
+                    <img id="img-preview" src="https://via.placeholder.com/150?text=Sua+Foto" alt="Foto de Perfil">
+                    <div class="photo-overlay"><i class="fas fa-camera text-white text-2xl"></i></div>
+                </div>
+                <input type="file" id="upload-photo" class="hidden" accept="image/*">
+            </div>
+
+            <div class="flex-grow text-center md:text-left w-full">
+                <div id="editable-name" class="editable text-3xl font-black text-[var(--primary-color)] uppercase tracking-tight mb-1" contenteditable="true">[SEU NOME COMPLETO]</div>
+                <div id="editable-role" class="editable text-lg font-semibold text-[var(--accent-color)] mb-3" contenteditable="true">[SEU CARGO OU OBJETIVO]</div>
+                
+                <div id="editable-contact" class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
+                    <span class="editable" contenteditable="true"><i class="fas fa-envelope text-[var(--accent-color)]"></i> seu.email@exemplo.com</span>
+                    <span class="editable" contenteditable="true"><i class="fas fa-phone text-[var(--accent-color)]"></i> (XX) 99999-9999</span>
+                    <span class="editable" contenteditable="true"><i class="fab fa-linkedin text-[var(--accent-color)]"></i> linkedin.com/in/seu-perfil</span>
+                </div>
+            </div>
+
+            <div id="qr-area" class="flex-shrink-0 flex flex-col items-center" style="display: none;">
+                <div class="qr-container" onclick="document.getElementById('upload-qr').click()">
+                    <img id="qr-preview" src="https://via.placeholder.com/80?text=QR+Code" class="w-full h-full object-cover p-1">
+                </div>
+                <input type="file" id="upload-qr" class="hidden" accept="image/*">
+            </div>
+        </header>
+
+        <!-- CORPO DA CARTA -->
+        <main>
+            <div id="editable-date" class="letter-date editable" contenteditable="true">21 de Janeiro de 2026</div>
+
+            <div id="recipient-block" class="recipient-block">
+                <p class="font-bold text-[var(--primary-color)] editable" contenteditable="true">À equipe de Recrutamento da [Nome da Empresa]</p>
+                <p class="editable text-sm text-gray-500" contenteditable="true">A/C: [Nome do Gestor ou "Gerente de Contratação"]</p>
+                <p class="editable text-sm text-gray-500 mt-1" contenteditable="true">Ref: Candidatura para a vaga de [Nome da Vaga]</p>
+            </div>
+
+            <div class="letter-body">
+                <!-- ATO 1: O GANCHO -->
+                <div id="letter-p1" class="letter-paragraph editable" contenteditable="true">
+                    Prezados,
+                    <br><br>
+                    [<strong>O Gancho:</strong> Aqui é onde você ganha o leitor. Não comece com "Venho por meio desta". Mostre que você conhece a empresa. Ex: "Tenho acompanhado com entusiasmo o crescimento da [Empresa] no setor de [Setor], especialmente o projeto [X]. Ao ver a oportunidade para [Cargo], percebi a chance ideal de unir minha experiência em [Sua Área] com os desafios de inovação que vocês propõem."]
+                </div>
+
+                <!-- ATO 2: O PITCH TÉCNICO -->
+                <div id="letter-p2" class="letter-paragraph editable" contenteditable="true">
+                    [<strong>O Valor Técnico:</strong> Conecte suas conquistas do currículo com a vaga. Ex: "Em minha trajetória como [Cargo Anterior], especializei-me em otimizar processos que resultaram em [Resultado Numérico]. Minha vivência com [Ferramenta Chave] me permite contribuir imediatamente para a meta de [Meta da Empresa], reduzindo a curva de aprendizado e focando em resultados desde o primeiro dia."]
+                </div>
+
+                <!-- ATO 3: FIT CULTURAL -->
+                <div id="letter-p3" class="letter-paragraph editable" contenteditable="true">
+                    [<strong>O Diferencial Humano:</strong> Fale de Soft Skills. Ex: "Mais do que habilidades técnicas, trago um perfil orientado a [Resolução de Problemas/Liderança/Colaboração]. Identifico-me fortemente com o valor de [Valor da Empresa] e busco um ambiente onde possa aplicar minha proatividade para elevar o padrão da equipe."]
+                </div>
+
+                <!-- ATO 4: CALL TO ACTION -->
+                <div id="letter-p4" class="letter-paragraph editable" contenteditable="true">
+                    Estou à disposição para uma entrevista, onde poderei detalhar como minhas qualificações podem agregar valor estratégico à [Nome da Empresa]. Agradeço a atenção e aguardo um breve retorno.
+                </div>
+            </div>
+
+            <div class="signature-block">
+                <p class="editable" contenteditable="true">Atenciosamente,</p>
+                <br>
+                <p class="editable font-bold" contenteditable="true" style="color: var(--primary-color); border-top: 1px solid #ccc; display: inline-block; padding-top: 10px; margin-top: 10px; min-width: 200px;">[SEU NOME COMPLETO]</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- PAINEL IA -->
+    <div id="ai-panel">
+        <div class="ai-header">
+            <span class="ai-title"><i class="fas fa-robot"></i> Consultor de Cartas (IA)</span>
+            <button class="btn-action secondary btn-sm" onclick="toggleAI()">Fechar</button>
+        </div>
+        <div id="api-key-section">
+            <label style="font-size: 0.8rem; font-weight: bold; color: #64748b;">Chave Google Gemini API:</label>
+            <div class="ai-input-group">
+                <input type="password" id="gemini-key" class="ai-input" placeholder="Cole sua chave aqui (AIzaSy...)">
+                <button class="btn-action secondary" onclick="saveKey()">Salvar</button>
+            </div>
+            <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 4px;">A chave é a mesma do Currículo. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--accent-color);">Gerar Chave</a></p>
+        </div>
+        <div id="ai-actions" style="display:none; flex-direction: column; gap: 10px;">
+            <p style="font-size:0.75rem; color: #64748b;">Selecione um parágrafo no texto para a IA melhorar.</p>
+            <div class="flex gap-2 overflow-x-auto pb-2">
+                <button class="btn-action ai" onclick="runAI('persuade')">🚀 Persuasão</button>
+                <button class="btn-action secondary" onclick="runAI('formal')">👔 Formal</button>
+                <button class="btn-action secondary" onclick="runAI('grammar')">✨ Corrigir</button>
+            </div>
+            <div id="ai-output" class="ai-result-area" style="display:none;"><span style="color: #94a3b8;">Aguardando...</span></div>
+            <div style="display:flex; justify-content: flex-end;">
+                <button id="copy-ai-btn" class="btn-action secondary btn-sm" style="display:none" onclick="copyAIResult()">Copiar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DOCK DE CONTROLE -->
+    <div id="control-dock">
+        <div class="dock-row">
+            <div class="flex items-center gap-2" style="flex: 1; min-width: 0;">
+                <span class="dock-label">ESTILOS PROFISSIONAIS:</span>
+                <div class="color-scroll-container">
+                    <div class="flex items-center gap-2">
+                        <!-- COPIADO DO CURRÍCULO PARA SINCRONIA TOTAL -->
+                        <!-- BANCOS & FINANÇAS -->
+                        <div class="color-group-label" style="color: #EB0029;">BANCOS</div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #EB0029; --c-sec: #cccccc;" onclick="setTheme('#EB0029', '#2d2d2d')" title="Vermelho Santander"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #F39200; --c-sec: #005A9C;" onclick="setTheme('#005A9C', '#F39200')" title="Laranja Itaú"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #cc0000; --c-sec: #e6e6e6;" onclick="setTheme('#cc0000', '#666666')" title="Bradesco"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #6a1b9a; --c-sec: #8e24aa;" onclick="setTheme('#4a148c', '#ab47bc')" title="Nubank/Tech"></div>
+
+                        <div class="color-group-label" style="color: #004B8D;">INDÚSTRIA</div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #e67e22; --c-sec: #003366;" onclick="setTheme('#003366', '#e67e22')" title="Braskem"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #007680; --c-sec: #D99800;" onclick="setTheme('#007680', '#D99800')" title="Vale"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #004B8D; --c-sec: #808080;" onclick="setTheme('#004B8D', '#546E7A')" title="Gerdau"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #003B26; --c-sec: #009640;" onclick="setTheme('#003B26', '#009640')" title="Verde Bracell"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #008542; --c-sec: #FFC72C;" onclick="setTheme('#008542', '#FFC72C')" title="Petrobras"></div>
+
+                        <div class="color-group-label" style="color: #000000;">BÁSICO</div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #000000; --c-sec: #2563eb;" onclick="setTheme('#000000', '#2563eb')" title="Preto/Azul"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #000000; --c-sec: #10b981;" onclick="setTheme('#000000', '#10b981')" title="Preto/Verde"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #374151; --c-sec: #3b82f6;" onclick="setTheme('#374151', '#3b82f6')" title="Cinza/Azul"></div>
+                        <div class="color-dot color-dot-dual" style="--c-prim: #1e3a8a; --c-sec: #fbbf24;" onclick="setTheme('#1e3a8a', '#fbbf24')" title="Royal/Gold"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="btn-action secondary btn-sm" onclick="exportData()" title="Salvar Backup"><i class="fas fa-download"></i> JSON</button>
+                <button class="btn-action secondary btn-sm" onclick="document.getElementById('import-json').click()" title="Restaurar (Aceita JSON do CV)"><i class="fas fa-upload"></i> Restaurar</button>
+                <input type="file" id="import-json" class="hidden" accept=".json" onchange="importData(this)">
+            </div>
+        </div>
+
+        <div class="dock-row">
+            <div class="flex items-center gap-2">
+                <button class="btn-action ai" onclick="toggleAI()"><i class="fas fa-robot"></i> IA</button>
+                <button class="btn-action secondary" onclick="toggleElement('qr-area')"><i class="fas fa-qrcode"></i> QR</button>
+                <button class="btn-action secondary" onclick="toggleElement('photo-area')"><i class="fas fa-camera"></i> Foto</button>
+            </div>
+            <div class="flex items-center gap-2 ml-auto">
+                <button class="btn-action secondary btn-sm" onclick="generatePDF(false)" title="Versão texto simples"><i class="fas fa-robot"></i> ATS</button>
+                <button class="btn-action accent" onclick="generatePDF(true)"><i class="fas fa-file-pdf"></i> PDF</button>
+                <button class="btn-action" style="background-color: #059669;" onclick="saveProject()"><i class="fas fa-save"></i> HTML</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA AUTOMÁTICA ---
+        window.addEventListener('load', () => {
+            const dateEl = document.getElementById('editable-date');
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            // Apenas define se for o padrão, para não sobrescrever edições
+            if(dateEl.innerText.includes('2026') || dateEl.innerText === "") {
+                dateEl.innerText = now.toLocaleDateString('pt-BR', options);
+            }
+            setupAutoSave();
+        });
+
+        // --- AUTO-SAVE ---
+        function setupAutoSave() {
+            const editables = document.querySelectorAll('[contenteditable="true"]');
+            editables.forEach(el => {
+                const id = el.id;
+                if(id) {
+                    const saved = localStorage.getItem('autosave_letter_' + id);
+                    if(saved && saved.trim().length > 0) el.innerHTML = saved;
+                    el.addEventListener('input', () => localStorage.setItem('autosave_letter_' + id, el.innerHTML));
+                }
+            });
+            
+            // Tenta recuperar chave da API do currículo se não existir na carta
+            if(!localStorage.getItem('gemini_api_key_letter') && localStorage.getItem('gemini_api_key_resume')) {
+                localStorage.setItem('gemini_api_key_letter', localStorage.getItem('gemini_api_key_resume'));
+            }
+        }
+
+        // --- IMAGENS ---
+        function handleImageUpload(inputId, imgId, bgMode = false) {
+            document.getElementById(inputId).addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        if (bgMode) document.getElementById('watermark-layer').style.backgroundImage = `url('${ev.target.result}')`;
+                        else document.getElementById(imgId).src = ev.target.result;
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+        handleImageUpload('upload-photo', 'img-preview');
+        handleImageUpload('upload-qr', 'qr-preview');
+
+        // --- UTILITÁRIOS ---
+        function setTheme(primary, accent) {
+            document.documentElement.style.setProperty('--primary-color', primary);
+            document.documentElement.style.setProperty('--accent-color', accent);
+        }
+        function toggleElement(elementId) {
+            const el = document.getElementById(elementId);
+            el.style.display = (el.style.display === 'none') ? (elementId === 'photo-area' ? 'block' : 'flex') : 'none';
+        }
+
+        // --- IA (GEMINI) ---
+        function toggleAI() { document.getElementById('ai-panel').classList.toggle('active'); checkKey(); }
+        function checkKey() {
+            const key = localStorage.getItem('gemini_api_key_letter') || localStorage.getItem('gemini_api_key_resume'); 
+            if (key) { document.getElementById('gemini-key').value = key; document.getElementById('api-key-section').style.display = 'none'; document.getElementById('ai-actions').style.display = 'flex'; }
+            else { document.getElementById('api-key-section').style.display = 'block'; document.getElementById('ai-actions').style.display = 'none'; }
+        }
+        function saveKey() {
+            const key = document.getElementById('gemini-key').value.trim();
+            if (key) { localStorage.setItem('gemini_api_key_letter', key); alert('Chave salva!'); checkKey(); }
+        }
+
+        async function runAI(mode) {
+            const outputDiv = document.getElementById('ai-output');
+            const key = localStorage.getItem('gemini_api_key_letter') || document.getElementById('gemini-key').value;
+            if (!key) { alert('Chave API necessária!'); return; }
+            
+            let selection = window.getSelection().toString();
+            if (!selection || selection.length < 5) { outputDiv.innerHTML = '<span style="color:red">Por favor, selecione o texto que deseja melhorar na carta.</span>'; outputDiv.style.display = 'block'; return; }
+
+            outputDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Consultor trabalhando...'; outputDiv.style.display = 'block';
+
+            let prompt = "";
+            if (mode === 'persuade') {
+                prompt = `Atue como um Especialista em Carreira. Reescreva o seguinte parágrafo de uma Carta de Apresentação para ser mais PERSUASIVO, confiante e focado em resultados (Vendas/Comercial). Texto: "${selection}"`;
+            } else if (mode === 'formal') {
+                prompt = `Reescreva este trecho para ter um tom mais FORMAL, executivo e polido (Corporativo/Bancário): "${selection}"`;
+            } else if (mode === 'grammar') {
+                prompt = `Corrija erros gramaticais, de pontuação e melhore a fluidez deste texto, mantendo o sentido original: "${selection}"`;
+            }
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${key}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+                const data = await response.json();
+                outputDiv.innerHTML = marked.parse(data.candidates[0].content.parts[0].text);
+                document.getElementById('copy-ai-btn').style.display = 'block';
+            } catch (error) { outputDiv.innerHTML = `<span style="color:red">Erro: ${error.message}</span>`; }
+        }
+        function copyAIResult() { navigator.clipboard.writeText(document.getElementById('ai-output').innerText); alert('Texto copiado!'); }
+
+        // --- BACKUP JSON INTELIGENTE ---
+        function exportData() {
+            const data = {
+                type: "cover_letter", // Identificador
+                profile: {
+                    name: document.getElementById('editable-name').innerText,
+                    role: document.getElementById('editable-role').innerText,
+                    contactHTML: document.getElementById('editable-contact').innerHTML
+                },
+                letterContent: {
+                    date: document.getElementById('editable-date').innerText,
+                    recipientHTML: document.getElementById('recipient-block').innerHTML,
+                    p1: document.getElementById('letter-p1').innerHTML,
+                    p2: document.getElementById('letter-p2').innerHTML,
+                    p3: document.getElementById('letter-p3').innerHTML,
+                    p4: document.getElementById('letter-p4').innerHTML
+                },
+                images: {
+                    photo: document.getElementById('img-preview').src,
+                    qr: document.getElementById('qr-preview').src
+                },
+                theme: {
+                    primary: getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),
+                    accent: getComputedStyle(document.documentElement).getPropertyValue('--accent-color').trim()
+                }
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const a = document.createElement('a');
+            a.href = dataStr; a.download = "carta_apresentacao_backup.json";
+            document.body.appendChild(a); a.click(); a.remove();
+        }
+
+        function importData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    let isResume = false;
+
+                    // Lógica para aceitar JSON do Currículo
+                    if(data.type !== "cover_letter") {
+                        if(confirm("Este arquivo parece ser um Currículo. Deseja importar os Dados Pessoais e Cores para a Carta?")) {
+                            isResume = true;
+                        } else { return; }
+                    }
+
+                    // Importação Comum (CV ou Carta)
+                    if(data.profile) {
+                        document.getElementById('editable-name').innerText = data.profile.name;
+                        document.getElementById('editable-role').innerText = data.profile.role;
+                        document.getElementById('editable-contact').innerHTML = data.profile.contactHTML;
+                    }
+                    if(data.images) {
+                        if(data.images.photo && data.images.photo.startsWith('data:')) {
+                            document.getElementById('img-preview').src = data.images.photo;
+                            document.getElementById('photo-area').style.display = 'block'; // Mostra se tiver foto
+                        }
+                        if(data.images.qr && data.images.qr.startsWith('data:')) document.getElementById('qr-preview').src = data.images.qr;
+                    }
+                    if(data.theme) setTheme(data.theme.primary, data.theme.accent);
+
+                    // Importação Específica da Carta
+                    if(!isResume && data.letterContent) {
+                        document.getElementById('editable-date').innerText = data.letterContent.date || "";
+                        document.getElementById('recipient-block').innerHTML = data.letterContent.recipientHTML || "";
+                        document.getElementById('letter-p1').innerHTML = data.letterContent.p1 || "";
+                        document.getElementById('letter-p2').innerHTML = data.letterContent.p2 || "";
+                        document.getElementById('letter-p3').innerHTML = data.letterContent.p3 || "";
+                        document.getElementById('letter-p4').innerHTML = data.letterContent.p4 || "";
+                    }
+                    
+                    alert('Dados importados com sucesso!');
+                } catch (error) { alert('Erro ao ler o arquivo JSON.'); }
+            };
+            reader.readAsText(file); input.value = ''; 
+        }
+
+        // --- GERAR PDF ---
+        window.jsPDF = window.jspdf.jsPDF;
+        async function generatePDF(isComplete) {
+            const paper = document.getElementById('resume-paper');
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            
+            const guideEl = document.getElementById('page-break-guide');
+            const photoEl = document.getElementById('photo-area');
+            const qrEl = document.getElementById('qr-area');
+            
+            // Oculta guias
+            guideEl.style.display = 'none';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+
+            const originalPhotoDisplay = photoEl.style.display;
+            const originalQrDisplay = qrEl.style.display;
+
+            // Se for ATS (versão simples), esconde elementos visuais pesados
+            if (!isComplete) { 
+                photoEl.style.display = 'none'; 
+                qrEl.style.display = 'none'; 
+            }
+
+            try {
+                const canvas = await html2canvas(paper, { scale: 2, useCORS: true, logging: false });
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+                const pdfWidth = pdf.internal.pageSize.getWidth(); 
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+                const fileName = isComplete ? 'Carta_Completa.pdf' : 'Carta_ATS.pdf';
+                pdf.save(fileName);
+
+            } catch (error) {
+                console.error(error); alert('Erro ao gerar PDF.');
+            } finally {
+                // Restaura estado
+                if (!isComplete) { 
+                    photoEl.style.display = originalPhotoDisplay; 
+                    qrEl.style.display = originalQrDisplay; 
+                }
+                guideEl.style.display = 'block';
+                btn.innerHTML = originalText;
+            }
+        }
+
+        function saveProject() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], {type: 'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'projeto_carta_apresentacao.html';
+            a.click();
+        }
+    </script>
+</body>
+</html>
